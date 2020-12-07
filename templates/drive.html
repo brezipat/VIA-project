@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Drive testing</title>
+</head>
+<body>
+    <p>current path: {{ current.getPath() }}</p>
+     <table>
+         <tr>
+             <td>Filename</td>
+             <td>Identifier</td>
+             <td>Type</td>
+         </tr>
+         {% if parent %}
+         <tr>
+             <td><a href="/{{parent.getPath()}}">...</a></td>
+             <td></td>
+             <td>Parent</td>
+<!--             <td>{{parent.getId()}}</td>-->
+<!--             <td>Parent of current directory</td>-->
+         </tr>
+         {% endif %}
+         {% for child in children %}
+             <tr>
+                 {% if child.getType() == "folder"%}
+                    <td><a href="/{{child.getPath()}}">{{ child.getValue() }}</a></td>
+                 {% else %}
+                    <td>{{ child.getValue() }}</td>
+                 {% endif %}
+                 <td>{{ child.getId() }}</td>
+                 <td>{{ child.getType() }}</td>
+             </tr>
+        {% endfor %}
+    </table>
+    <form action="/logout">
+        <input id="logoutButton" type="submit" value="Logout" />
+    </form>
+</body>
+</html>
