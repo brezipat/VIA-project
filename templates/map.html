@@ -4,11 +4,20 @@
     <meta charset="utf-8" />
 	<script type="text/javascript" src="https://api.mapy.cz/loader.js"></script>
     <script type="text/javascript">Loader.lang = "cs"; Loader.load(null, {poi:true});</script>
-<!--    <script>Loader.load()</script>-->
-<!--    <script type="text/javascript" src="../static/interest_points.js"></script>-->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
+    <ul>
+         <li><a href="/">Home</a></li>
+         <li><a href="/map">Map</a></li>
+         <li><a href="/fileSystem/root">File System</a></li>
+         {% if loggedIn %}
+            <li style="float:right"><a href="/logout">Logout</a></li>
+         {% else %}
+            <li style="float:right"><a href="/login">Login</a></li>
+         {% endif %}
+    </ul>
 	<div id="mapa" style="width:1000px; height:600px;"></div>
     <form id="form">
         <p>

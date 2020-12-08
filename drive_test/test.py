@@ -38,11 +38,11 @@ def main():
     while True:
         response = service.files().list(q="'root' in parents and trashed=false",
                                               spaces='drive',
-                                              fields='nextPageToken, files(id, name, mimeType)',
+                                              fields='nextPageToken, files(id, name, mimeType, webViewLink)',
                                               pageToken=page_token).execute()
         for file in response.get('files', []):
             # Process change
-            print('Found file: %s (%s) (%s)' % (file['name'], file['id'], file['mimeType']))
+            print('Found file: %s (%s) (%s) (%s)' % (file['name'], file['id'], file['mimeType'], file['webViewLink']))
         page_token = response.get('nextPageToken', None)
         if page_token is None:
             break

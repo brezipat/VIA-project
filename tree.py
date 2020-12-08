@@ -2,10 +2,11 @@ from collections import deque
 
 
 class vertex:
-    def __init__(self, value, id, type, path, parent):
+    def __init__(self, value, id, type, path, link, parent):
         self.id = id
         self.value = value
         self.path = path
+        self.link = link
         self.parent = parent
         self.children = []
         self.type = type
@@ -34,6 +35,9 @@ class vertex:
     def getPath(self):
         return self.path
 
+    def getLink(self):
+        return self.link
+
     def getChildren(self):
         return self.children
 
@@ -45,7 +49,7 @@ class Tree:
     count = 0
 
     def __init__(self, service, rootVal='root'):
-        self.root = vertex(rootVal, 'root', 'root', 'root', None)
+        self.root = vertex(rootVal, 'root', 'root', 'root', None, None)
         self.service = service
         self.count += 1
 
@@ -83,9 +87,9 @@ class Tree:
     def findId(self, id):
         return self.bfsIdSearch(id)
 
-    def addChild(self, parent, value, childId, type):
+    def addChild(self, parent, value, childId, type, link):
         childPath = f"{parent.getPath()},{value}"
-        child = vertex(value, childId, type, childPath, parent)
+        child = vertex(value, childId, type, childPath, link, parent)
         parent.addChild(child)
         self.count += 1
 
@@ -94,12 +98,12 @@ class Tree:
         while True:
             response = self.service.files().list(q=f"'{vert.getId()}' in parents and trashed=false",
                                                  spaces='drive',
-                                                 fields='nextPageToken, files(id, name, mimeType)',
+                                                 fields='nextPageToken, files(id, name, mimeType, webViewLink)',
                                                  pageToken=page_token).execute()
             for file in response.get('files', []):
                 # print('Found file: %s (%s) (%s)' % (file['name'], file['id'], file['mimeType']))
                 t = file['mimeType'].split('.')[-1]
-                self.addChild(vert, file['name'], file['id'], t)
+                self.addChild(vert, file['name'], file['id'], t, file['webViewLink'],)
             page_token = response.get('nextPageToken', None)
             if page_token is None:
                 break

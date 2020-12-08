@@ -99,6 +99,6 @@ def index(path=''):
     if not tree:
         tree = init_tree(service)
     data = findFiles(path)
-    return render_template("drive.html", current=data[0], parent=data[1], children=data[2])
+    return render_template("fileSystem.html", current=data[0], parent=data[1], children=data[2])
 
 app.run(debug=True)

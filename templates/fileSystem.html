@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Drive search</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <ul>
+         <li><a href="/">Home</a></li>
+         <li><a href="/map">Map</a></li>
+         <li><a href="/fileSystem/root">File System</a></li>
+         {% if loggedIn %}
+            <li style="float:right"><a href="/logout">Logout</a></li>
+         {% else %}
+            <li style="float:right"><a href="/login">Login</a></li>
+         {% endif %}
+    </ul>
+    {% if loggedIn %}
+        <p>current path: {{ current.getPath() }}</p>
+         <table>
+             <tr>
+                 <td>Filename</td>
+                 <td>Identifier</td>
+                 <td>Type</td>
+                 <td>File link</td>
+             </tr>
+             {% if parent %}
+             <tr>
+                 <td><a href="/fileSystem/{{parent.getPath()}}">...</a></td>
+                 <td></td>
+                 <td>Parent</td>
+                 <td>{% if parent.getLink() %} <a href="{{parent.getLink()}}" target="_blank">Parent drive link</a> {% endif %}</td>
+    <!--             <td>{{parent.getId()}}</td>-->
+    <!--             <td>Parent of current directory</td>-->
+             </tr>
+             {% endif %}
+             {% for child in children %}
+                 <tr>
+                     {% if child.getType() == "folder"%}
+                        <td><a href="/fileSystem/{{child.getPath()}}">{{ child.getValue() }}</a></td>
+                     {% else %}
+                        <td>{{ child.getValue() }}</td>
+                     {% endif %}
+                     <td>{{ child.getId() }}</td>
+                     <td>{{ child.getType() }}</td>
+                     <td><a href="{{ child.getLink() }}" target="_blank">Drive link</a></td>
+                 </tr>
+            {% endfor %}
+        </table>
+            <form action="/fileSystemRefresher">
+                <p>If you've performed a modification in google drive while using this tool, press the refresh button for the changes to take an effect in here as well.</p>
+                <input id="refreshButton" type="submit" value="Refresh File System" />
+            </form>
+    {% else %}
+        <h1>To utilized the google drive filesystem you have to log in first</h1>
+    {% endif %}
+</body>
+</html>

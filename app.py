@@ -13,11 +13,20 @@ creds = None
 tree = None
 
 def checkForExistingCredentials():
-    creds = None
+    global creds
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
             creds = pickle.load(token)
-    return creds
+
+def validCredsExist():
+    global creds
+    checkForExistingCredentials()
+    if not creds or not creds.valid:
+        # if creds and creds.expired and creds.refresh_token:
+        #     creds.refresh(Request())
+        # else:
+        return False
+    return True
 
 def createServiceFromCreds():
     global service
@@ -38,16 +47,6 @@ def findFiles(path):
     for i in range(len(current.children)):
         child = current.children[i]
         ret[2].append(child)
-    # results = service.files().list(q=f"'root' in parents and trashed=false",
-    #                                spaces='drive',
-    #                                fields="files(id, name, mimeType)").execute()
-    # items = results.get('files', [])
-    # if not items:
-    #     return f'No files found in {path}.'
-    # else:
-    #     for item in items:
-    #         # out_str += u'{0} ({1})<br/>'.format(item['name'], item['id'])
-    #         ret.append((item['name'], item['id'], item['mimeType']))
     return ret
 
 def init_tree(service):
@@ -80,25 +79,35 @@ def logout():
     return redirect('/')
 
 @app.route('/')
-@app.route('/<path>')
-def index(path=''):
+def index():
+    loggedIn = validCredsExist()
+    return render_template("homepage.html", loggedIn=loggedIn)
+
+@app.route('/map')
+def map():
+    loggedIn = validCredsExist()
+    return render_template("map.html", loggedIn=loggedIn)
+
+@app.route('/fileSystemRefresher')
+def refresher():
+    global tree
+    tree = None
+    return redirect('/fileSystem/root')
+
+@app.route('/fileSystem')
+@app.route('/fileSystem/<path>')
+def fileSystem(path=''):
     global service
-    global creds
     global tree
     if not service:
-        creds = checkForExistingCredentials()
-        if not creds or not creds.valid:
-            # if creds and creds.expired and creds.refresh_token:
-            #     creds.refresh(Request())
-            # else:
+        if not validCredsExist():
             service = None
-            creds = None
             tree = None
-            return render_template("index.html")
+            return render_template("fileSystem.html", loggedIn=False)
         createServiceFromCreds()
     if not tree:
         tree = init_tree(service)
     data = findFiles(path)
-    return render_template("app.html", current=data[0], parent=data[1], children=data[2])
+    return render_template("fileSystem.html", loggedIn=True, current=data[0], parent=data[1], children=data[2])
 
 app.run(debug=True)
