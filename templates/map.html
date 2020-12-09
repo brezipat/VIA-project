@@ -33,10 +33,28 @@
     <label>Hledání na mapě podle souřadnic: <br/> <input type="text" id="coordinate_search_text" size="50"/></label>
     <button id="coordinate_search_button">Find</button>
     <br/>
-    <label>Vytvoř ukazatel na zadaných souřadnicích: <br/> <input type="text" id="place_marker_text" size="50"/></label>
-    <button id="place_marker_button">Place Marker</button>
-    <br/>
-    <button id="sendMarkers">Send Markers</button>
+    <div>
+        <p>
+            <label>Jméno značky: <br/> <input type="text" id="place_marker_name" size="40"/></label><br/>
+            <label>Dodatečné informace o značce:</label><br/>
+            <textarea id="place_marker_info" rows="5" cols="50"></textarea><br/>
+            <label>Souřadnice značky: <br/> <input type="text" id="place_marker_coords" size="50"/></label>
+            <button id="place_marker_button">Place Marker</button>
+            <br/>
+        </p>
+        <p>
+            <label>Zadej jméno značky k odstranění: <br/> <input type="text" id="delete_marker_name" size="40"/></label><br/>
+            <button id="delete_marker_button">Delete Marker</button>
+        </p>
+    </div>
+    <table id="markersTable">
+        <tr>
+            <td>Jméno značky</td>
+            <td>Souřadnice značky</td>
+            <td>Informace značky</td>
+        </tr>
+    </table>
+<!--    <button id="sendMarkers">Send Markers</button>-->
     <script type="text/javascript" src="../static/map_display.js"></script>
 </body>
 </html>

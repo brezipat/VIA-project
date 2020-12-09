@@ -3,8 +3,11 @@ from googleapiclient.discovery import build
 import os.path
 import pickle
 from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
 import tree as t
+import os
+from os import listdir
+from os.path import isfile, join
+import json
 
 app = Flask(__name__)
 
@@ -93,13 +96,51 @@ def index():
     loggedIn = validCredsExist()
     return render_template("homepage.html", loggedIn=loggedIn)
 
+def getJsonFiles():
+    data_files = [f for f in listdir('./jsonData/') if isfile(join('./jsonData/', f))]
+    ret = []
+    for file in data_files:
+        if file.split('.')[-1] == 'json':
+            ret.append(file)
+    return ret
 
-# function () {
-#     document.getElementById("coordinate_search_text").value = "Random";
-#     document.getElementById('place_marker_text').value = "Random";
-# }
 
-# <label onclick='document.getElementById("coordinate_search_text").value = "50°29&apos;24.882\"N, 15°8&apos;12.353\"E"; document.getElementById("place_marker_text").value = "50°29&apos;24.882\"N, 15°8&apos;12.353\"E"'>Libošovice, Podkost, hrad Kost, Libošovice, Česko, (50°29'24.882"N, 15°8'12.353"E)</label><br/>
+def constructListOutput(ls):
+    ret = ""
+    for item in ls:
+        ret += f'{item}<br/>'
+    return ret
+
+
+@app.route('/Json')
+def jsons():
+    return constructListOutput(getJsonFiles())
+
+
+@app.route('/Json/<string:filename>')
+@app.route('/Json/<string:filename>/<path>')
+def viewFile(filename='', path=''):
+    if not os.path.exists(f"./jsonData/{filename}"):
+        return "Give file doesn't exist, select on of these:<br/> " + constructListOutput(getJsonFiles())
+    s = path.split(',')
+    with open(f"./jsonData/{filename}", 'r', encoding='utf-8') as json_file:
+        data = json.load(json_file)
+    current = data
+    for identifier in s:
+        if identifier in current:
+            current = current[identifier]
+        else:
+            return current
+    return current
+
+
+@app.route('/Json/<string:filename>/update', methods=["POST"])
+def update(filename):
+    if not os.path.exists(f"./jsonData/{filename}"):
+        return "Give file doesn't exist, select on of these:<br/> " + constructListOutput(getJsonFiles())
+    with open(f"./jsonData/{filename}", 'r', encoding='utf-8') as json_file:
+        data = json.load(json_file)
+
 
 @app.route('/placeSearch', methods=['POST'])
 def placeSearch():
@@ -112,7 +153,7 @@ def placeSearch():
         print(d)
         new_label = '<label onclick=\'' \
                     'document.getElementById("coordinate_search_text").value = "%s";' \
-                    'document.getElementById("place_marker_text").value = "%s"' \
+                    'document.getElementById("place_marker_coords").value = "%s"' \
                     '\'>%s, (%s)</label><br/>' % (d['coords'], d['coords'], d['label'], d['coords'])
         resp_dic[d['id']] = new_label
     # resp_dic = {'html': '<label onclick="addNewElement()">I am new paragraph</label>'}
@@ -121,13 +162,33 @@ def placeSearch():
     return resp
 
 
+@app.route('/processMarkers', methods=['POST'])
+def processMarkers():
+    data = request.get_json()
+    print(data)
+    table = "<table>" \
+            "<tr>" \
+            "<td>Jméno značky</td>" \
+            "<td>Souřadnice značky</td>" \
+            "<td>Informace značky</td>" \
+            "</tr>"
+    for key in data:
+        table += "<tr>"
+        marker_data = data[key]
+        ident = marker_data["id"]
+        coords = marker_data["coords"]
+        info = marker_data["info"]
+        table += f"<td>{ident}</td><td>{coords}</td><td>{info}</td>"
+        table += "</tr>"
+    table += "</table>"
+    resp_dict = {'table': table}
+    resp = jsonify(resp_dict)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    # print(table)
+    return resp
+
 @app.route('/map', methods=['POST', 'GET'])
 def map():
-    if request.method == 'POST':
-        data = request.get_json()
-        print(data)
-        loggedIn = validCredsExist()
-        return render_template("map.html", loggedIn=loggedIn)
     if request.method == 'GET':
         loggedIn = validCredsExist()
         return render_template("map.html", loggedIn=loggedIn)

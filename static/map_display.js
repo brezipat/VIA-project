@@ -75,7 +75,6 @@ function coordinate_search() {
     var coords = document.getElementById("coordinate_search_text").value;
     var c = SMap.Coords.fromWGS84(coords);
     var zoom = 16;
-    // m.setCenter(c);
     m.setCenterZoom(c, zoom)
 }
 
@@ -85,38 +84,88 @@ var marker_layer = new SMap.Layer.Marker();
 m.addLayer(marker_layer);
 marker_layer.enable();
 
-function place_marker() {
-    var options = {};
-    var coords = document.getElementById("place_marker_text").value;
-    var c = SMap.Coords.fromWGS84(coords);
-    var marker = new SMap.Marker(c, "myMarker", options);
-    markers.push(marker);
-    marker_layer.addMarker(marker);
-}
-
-function sendMarkersToFlask() {
+function updateMarkersTable(){
     markers_obj = {};
-    for (var i = 0; i < markers.length; i++) {
-        marker = markers[i]
-        console.log(marker['_options']);
-        console.log(marker['_ec']);
-        console.log(marker['_id']);
-        markers_obj[i] = marker['_id'];
-    }
-    console.log(markers_obj);
+//    console.log(markers);
+    markers.forEach((element, index) => {
+        data_obj = {};
+        data_obj['id'] = element['_id'];
+        data_obj['coords'] = element['_coords'].toWGS84(2).reverse().join(", ");
+        data_obj['info'] = element['_info'];
+        markers_obj[index] = data_obj;
+    });
+//    console.log(markers_obj);
     $.ajax({
           type: "POST",
           contentType: "application/json;charset=utf-8",
-          url: "/map",
+          url: "/processMarkers",
           data: JSON.stringify(markers_obj),
           dataType: "json"
+    }).done(function(data) {
+        document.getElementById('markersTable').innerHTML = data['table']
+	});
+}
+
+function delete_marker() {
+    var name = document.getElementById("delete_marker_name").value;
+    if (!name) {
+        alert('You have to choose a name for marker you want to delete!');
+        return;
+    }
+    marker_index = -1;
+    markers.forEach((element, index) => {
+        if (element['_id'] === name) {
+            marker_index = index;
+        }
     });
+    if (marker_index == -1) {
+        alert("There is no such marker");
+    } else {
+        markers.splice(marker_index, 1);
+        updateMarkersTable();
+    }
+}
+
+function place_marker() {
+    var name = document.getElementById("place_marker_name").value;
+    var info = document.getElementById("place_marker_info").value;
+    var coords = document.getElementById("place_marker_coords").value;
+    var c = SMap.Coords.fromWGS84(coords);
+    var name_match = "no";
+    var coord_match = "no"
+    if (!name) {
+        alert('You have to choose a name for your marker!');
+        return;
+    }
+    markers.forEach((element) => {
+        if (element['_id'] === name) {
+            name_match = "yes";
+        }
+        if (element['_coords']['x'] == c['x'] && element['_coords']['y'] == c['y']) {
+            coord_match = 'yes';
+        }
+    });
+    if (name_match === "no" && coord_match === "no") {
+        var options = {title: name};
+        var card = new SMap.Card();
+        card.getBody().innerHTML = info;
+        var marker = new SMap.Marker(c, name, options);
+        marker.decorate(SMap.Marker.Feature.Card, card);
+        marker['_info'] = info;
+        markers.push(marker);
+        marker_layer.addMarker(marker);
+        updateMarkersTable()
+    } else if (name_match === "yes") {
+        alert("Marker with such name already exists. Choose a different one!")
+    } else {
+        alert("Marker on such coordinates already exists. You can't place two markers on top of each other!")
+    }
 }
 
 var form = JAK.gel("form");
 JAK.Events.addListener(form, "submit", geokoduj);
 document.getElementById("coordinate_search_button").addEventListener("click", coordinate_search);
 
-document.getElementById("sendMarkers").addEventListener("click", sendMarkersToFlask);
-
 document.getElementById("place_marker_button").addEventListener("click", place_marker);
+
+document.getElementById("delete_marker_button").addEventListener("click", delete_marker);
