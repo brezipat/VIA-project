@@ -1,4 +1,4 @@
-from flask import Flask, redirect, render_template
+from flask import Flask, redirect, render_template, request, jsonify
 from googleapiclient.discovery import build
 import os.path
 import pickle
@@ -12,11 +12,13 @@ service = None
 creds = None
 tree = None
 
+
 def checkForExistingCredentials():
     global creds
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
             creds = pickle.load(token)
+
 
 def validCredsExist():
     global creds
@@ -28,10 +30,12 @@ def validCredsExist():
         return False
     return True
 
+
 def createServiceFromCreds():
     global service
     global creds
     service = build('drive', 'v3', credentials=creds)
+
 
 def findFiles(path):
     global service
@@ -42,6 +46,8 @@ def findFiles(path):
         child = s[i]
         if child == '':
             break
+        if child == "root":
+            continue
         current = tree.moveToChild(current, child)
     ret = (current, current.getParent(), [])
     for i in range(len(current.children)):
@@ -49,10 +55,12 @@ def findFiles(path):
         ret[2].append(child)
     return ret
 
+
 def init_tree(service):
     tree = t.Tree(service)
     tree.expandTree(tree.getRoot())
     return tree
+
 
 @app.route('/login')
 def authorize():
@@ -64,6 +72,7 @@ def authorize():
         pickle.dump(creds, token)
     createServiceFromCreds()
     return redirect('/')
+
 
 @app.route('/logout')
 def logout():
@@ -78,21 +87,58 @@ def logout():
     #     session.pop(key)
     return redirect('/')
 
+
 @app.route('/')
 def index():
     loggedIn = validCredsExist()
     return render_template("homepage.html", loggedIn=loggedIn)
 
-@app.route('/map')
+
+# function () {
+#     document.getElementById("coordinate_search_text").value = "Random";
+#     document.getElementById('place_marker_text').value = "Random";
+# }
+
+# <label onclick='document.getElementById("coordinate_search_text").value = "50°29&apos;24.882\"N, 15°8&apos;12.353\"E"; document.getElementById("place_marker_text").value = "50°29&apos;24.882\"N, 15°8&apos;12.353\"E"'>Libošovice, Podkost, hrad Kost, Libošovice, Česko, (50°29'24.882"N, 15°8'12.353"E)</label><br/>
+
+@app.route('/placeSearch', methods=['POST'])
+def placeSearch():
+    data = request.get_json()
+    resp_dic = {}
+    for entry in data:
+        d = data[entry]
+        d['coords'] = d['coords'].replace("'", "&apos;")
+        d['coords'] = d['coords'].replace('"', f'\\"')
+        print(d)
+        new_label = '<label onclick=\'' \
+                    'document.getElementById("coordinate_search_text").value = "%s";' \
+                    'document.getElementById("place_marker_text").value = "%s"' \
+                    '\'>%s, (%s)</label><br/>' % (d['coords'], d['coords'], d['label'], d['coords'])
+        resp_dic[d['id']] = new_label
+    # resp_dic = {'html': '<label onclick="addNewElement()">I am new paragraph</label>'}
+    resp = jsonify(resp_dic)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp
+
+
+@app.route('/map', methods=['POST', 'GET'])
 def map():
-    loggedIn = validCredsExist()
-    return render_template("map.html", loggedIn=loggedIn)
+    if request.method == 'POST':
+        data = request.get_json()
+        print(data)
+        loggedIn = validCredsExist()
+        return render_template("map.html", loggedIn=loggedIn)
+    if request.method == 'GET':
+        loggedIn = validCredsExist()
+        return render_template("map.html", loggedIn=loggedIn)
+
 
 @app.route('/fileSystemRefresher')
 def refresher():
     global tree
     tree = None
     return redirect('/fileSystem/root')
+
 
 @app.route('/fileSystem')
 @app.route('/fileSystem/<path>')
@@ -109,5 +155,6 @@ def fileSystem(path=''):
         tree = init_tree(service)
     data = findFiles(path)
     return render_template("fileSystem.html", loggedIn=True, current=data[0], parent=data[1], children=data[2])
+
 
 app.run(debug=True)

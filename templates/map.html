@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8" />
 	<script type="text/javascript" src="https://api.mapy.cz/loader.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
     <script type="text/javascript">Loader.lang = "cs"; Loader.load(null, {poi:true});</script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -18,23 +19,24 @@
             <li style="float:right"><a href="/login">Login</a></li>
          {% endif %}
     </ul>
-	<div id="mapa" style="width:1000px; height:600px;"></div>
+	<div id="mapa" style="width:600px; height:450px;"></div>
     <form id="form">
         <p>
             <label>Hledaná oblast: <br/> <input type="text" id="place_search" value="Hrad Kost" size="30"/></label>
             <input type="submit" value="Hledat" />
             <br/>
-            <label>Hledání na mapě podle souřadnic: <br/> <input type="text" id="coordinate_search_text" size="50"/></label>
-            <input type="submit" id="coordinate_search_button" value="Hledat">
-            <script type="text/javascript" src="../static/map_display.js"></script>
-            <br/>
-            <label>Vytvoř ukazatel na zadaných souřadnicích: <br/> <input type="text" id="place_marker_text" size="50"/></label>
-            <input type="submit" id="place_marker_button" value="Hledat">
-        </p>
-        <p>
-            <label>Výsledek hledání: <br/> <textarea id="search_output" rows="10" cols="100" readonly>Search output</textarea></label>
         </p>
     </form>
+    <div id="searchResult">Výsledek hledání:<br/>
+        <p id="searchResultPar"></p>
+    </div>
+    <label>Hledání na mapě podle souřadnic: <br/> <input type="text" id="coordinate_search_text" size="50"/></label>
+    <button id="coordinate_search_button">Find</button>
+    <br/>
+    <label>Vytvoř ukazatel na zadaných souřadnicích: <br/> <input type="text" id="place_marker_text" size="50"/></label>
+    <button id="place_marker_button">Place Marker</button>
+    <br/>
+    <button id="sendMarkers">Send Markers</button>
     <script type="text/javascript" src="../static/map_display.js"></script>
 </body>
 </html>

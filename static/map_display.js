@@ -46,12 +46,29 @@ function odpoved(geocoder) { /* Odpověď */
     }
 
     var vysledky = geocoder.getResults()[0].results;
-    var data = [];
+    sentData = {}
     while (vysledky.length) { /* Zobrazit všechny výsledky hledání */
         var item = vysledky.shift();
-        data.push(item.label + " (" + item.coords.toWGS84(2).reverse().join(", ") + ")");
+        item.coords = item.coords.toWGS84(2).reverse().join(", ");
+        sentData[item.id] = item;
     }
-    document.getElementById('search_output').textContent = data.join("\n");
+    $.ajax({
+        type: "POST",
+        contentType: "application/json;charset=utf-8",
+        url: "/placeSearch",
+        data: JSON.stringify(sentData),
+        dataType: "json"
+    }).done(function(data) {
+        var par = document.createElement('p');
+        for (var key in data) {
+            var label = document.createElement('label');
+            label.innerHTML = data[key].trim();
+            par.appendChild(label);
+        }
+        old_par = document.getElementById('searchResultPar');
+        document.getElementById('searchResult').replaceChild(par,old_par);
+        par.setAttribute("id", "searchResultPar");
+	});
 }
 
 function coordinate_search() {
@@ -62,6 +79,8 @@ function coordinate_search() {
     m.setCenterZoom(c, zoom)
 }
 
+var markers = []
+
 var marker_layer = new SMap.Layer.Marker();
 m.addLayer(marker_layer);
 marker_layer.enable();
@@ -71,10 +90,33 @@ function place_marker() {
     var coords = document.getElementById("place_marker_text").value;
     var c = SMap.Coords.fromWGS84(coords);
     var marker = new SMap.Marker(c, "myMarker", options);
+    markers.push(marker);
     marker_layer.addMarker(marker);
+}
+
+function sendMarkersToFlask() {
+    markers_obj = {};
+    for (var i = 0; i < markers.length; i++) {
+        marker = markers[i]
+        console.log(marker['_options']);
+        console.log(marker['_ec']);
+        console.log(marker['_id']);
+        markers_obj[i] = marker['_id'];
+    }
+    console.log(markers_obj);
+    $.ajax({
+          type: "POST",
+          contentType: "application/json;charset=utf-8",
+          url: "/map",
+          data: JSON.stringify(markers_obj),
+          dataType: "json"
+    });
 }
 
 var form = JAK.gel("form");
 JAK.Events.addListener(form, "submit", geokoduj);
 document.getElementById("coordinate_search_button").addEventListener("click", coordinate_search);
+
+document.getElementById("sendMarkers").addEventListener("click", sendMarkersToFlask);
+
 document.getElementById("place_marker_button").addEventListener("click", place_marker);
