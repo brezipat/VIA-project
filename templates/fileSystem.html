@@ -1,8 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            word-wrap:break-word;
+            padding: 5px;
+        }
+    </style>
     <meta charset="UTF-8">
     <title>Drive search</title>
+    <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -20,19 +31,23 @@
         <p>current path: {{ current.getPath() }}</p>
          <table>
              <tr>
-                 <td>Filename</td>
-                 <td>Identifier</td>
-                 <td>Type</td>
-                 <td>File link</td>
+                 <th width="250">Filename</th>
+<!--                 <th>Identifier</th>-->
+                 <th width="150">Type</th>
+                 <th width="120">File link</th>
+                 <th width="20"></th>
              </tr>
              {% if parent %}
              <tr>
                  <td><a href="/fileSystem/{{parent.getPath()}}">...</a></td>
-                 <td></td>
+<!--                 <td></td>-->
                  <td>Parent</td>
                  <td>{% if parent.getLink() %} <a href="{{parent.getLink()}}" target="_blank">Parent drive link</a> {% endif %}</td>
-    <!--             <td>{{parent.getId()}}</td>-->
-    <!--             <td>Parent of current directory</td>-->
+                 <td>
+                     {% if parent.getLink() %}
+                     <img src="{{url_for('static', filename='insert_icon.png')}}" height="20" width="20" onclick="{document.getElementById('file_link').value = '{{ parent.getLink() }}'}">
+                     {% endif %}
+                 </td>
              </tr>
              {% endif %}
              {% for child in children %}
@@ -42,9 +57,12 @@
                      {% else %}
                         <td>{{ child.getValue() }}</td>
                      {% endif %}
-                     <td>{{ child.getId() }}</td>
+<!--                     <td>{{ child.getId() }}</td>-->
                      <td>{{ child.getType() }}</td>
                      <td><a href="{{ child.getLink() }}" target="_blank">Drive link</a></td>
+                     <td>
+                         <img src="{{url_for('static', filename='insert_icon.png')}}" height="20" width="20" onclick="{document.getElementById('file_link').value = '{{ child.getLink() }}'}">
+                     </td>
                  </tr>
             {% endfor %}
         </table>
@@ -52,6 +70,41 @@
                 <p>If you've performed a modification in google drive while using this tool, press the refresh button for the changes to take an effect in here as well.</p>
                 <input id="refreshButton" type="submit" value="Refresh File System" />
             </form>
+        {% if markersData %}
+            <p> Marker Table:<br/>
+                <table id="markersTable">
+                    <tr>
+                        <th width="120">Marker Name</th>
+                        <th width="250">Marker Coordinates</th>
+                        <th width="800">Marker Information</th>
+                        <th width="200">Marker Links</th>
+                    </tr>
+                {% for key in markersData %}
+                    <tr>
+                        <td>{{ markersData[key]["id"] }}</td>
+                        <td>{{ markersData[key]["coords"] }}</td>
+                        <td>{{ markersData[key]["info"] }}</td>
+                        <td>
+                            {% if markersData[key]["links"] %}
+                                {% for placeholder in markersData[key]["links"] %}
+                                    {{ markersData[key]["links"][placeholder] | safe }}
+                                {% endfor %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </table>
+            </p>
+            <label>Marker Name: <br/> <input type="text" id="marker_name" size="40"/></label><br/>
+            <label>Link name: <br/> <input type="text" id="marker_placeholder" size="40"/></label><br/>
+            <label>File Link: <br/> <input type="text" id="file_link" size="100" readonly="readonly"/></label>
+            <button onclick="document.getElementById('file_link').value = ''">Remove link text</button>
+            <br/>
+            <button id="add_link">Add link to marker</button>
+            <button id="delete_link">Delete link from marker</button>
+            <script> var markersData = {{ markersData|tojson }};</script>
+            <script type="text/javascript" src="{{url_for('static', filename='filesystem.js')}}"></script>
+        {% endif %}
     {% else %}
         <h1>To utilized the google drive filesystem you have to log in first</h1>
     {% endif %}

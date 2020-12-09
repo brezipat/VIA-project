@@ -1,6 +1,16 @@
 <!doctype html>
 <html>
 <head>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            word-wrap:break-word;
+            padding: 5px;
+        }
+    </style>
     <meta charset="utf-8" />
 	<script type="text/javascript" src="https://api.mapy.cz/loader.js"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
@@ -19,42 +29,39 @@
             <li style="float:right"><a href="/login">Login</a></li>
          {% endif %}
     </ul>
-	<div id="mapa" style="width:600px; height:450px;"></div>
+	<div id="mapa" style="width:800px; height:600px;"></div>
     <form id="form">
         <p>
-            <label>Hledaná oblast: <br/> <input type="text" id="place_search" value="Hrad Kost" size="30"/></label>
+            <label>Search for: <br/> <input type="text" id="place_search" value="Hrad Kost" size="30"/></label>
             <input type="submit" value="Hledat" />
             <br/>
         </p>
     </form>
-    <div id="searchResult">Výsledek hledání:<br/>
+    <div id="searchResult">Search Result:<br/>
         <p id="searchResultPar"></p>
     </div>
-    <label>Hledání na mapě podle souřadnic: <br/> <input type="text" id="coordinate_search_text" size="50"/></label>
+    <label>Coordinates to search for on map: <br/> <input type="text" id="coordinate_search_text" size="50"/></label>
     <button id="coordinate_search_button">Find</button>
     <br/>
     <div>
         <p>
-            <label>Jméno značky: <br/> <input type="text" id="place_marker_name" size="40"/></label><br/>
-            <label>Dodatečné informace o značce:</label><br/>
+            <label>Marker name: <br/> <input type="text" id="place_marker_name" size="40"/></label><br/>
+            <label>Additional marker info:</label><br/>
             <textarea id="place_marker_info" rows="5" cols="50"></textarea><br/>
-            <label>Souřadnice značky: <br/> <input type="text" id="place_marker_coords" size="50"/></label>
+            <label>Marker Coordinates: <br/> <input type="text" id="place_marker_coords" size="50"/></label>
             <button id="place_marker_button">Place Marker</button>
             <br/>
         </p>
         <p>
-            <label>Zadej jméno značky k odstranění: <br/> <input type="text" id="delete_marker_name" size="40"/></label><br/>
+            <label>Insert name of marker you want to delete: <br/> <input type="text" id="delete_marker_name" size="40"/></label><br/>
             <button id="delete_marker_button">Delete Marker</button>
         </p>
     </div>
     <table id="markersTable">
-        <tr>
-            <td>Jméno značky</td>
-            <td>Souřadnice značky</td>
-            <td>Informace značky</td>
-        </tr>
     </table>
-<!--    <button id="sendMarkers">Send Markers</button>-->
     <script type="text/javascript" src="../static/map_display.js"></script>
+    <script>
+        createMarkersFromJson({{ markersData|tojson }})
+    </script>
 </body>
 </html>

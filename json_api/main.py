@@ -44,12 +44,12 @@ def viewFile(filename='', path=''):
     return current
 
 
-@app.route('/<string:filename>/update', methods=["POST"])
-def update(filename):
-    if not os.path.exists(f"./{filename}"):
-        return "Give file doesn't exist, select on of these:<br/> " + constructListOutput(getJsonFiles())
-    with open(filename, 'r', encoding='utf-8') as json_file:
-        data = json.load(json_file)
+# @app.route('/<string:filename>/update', methods=["POST"])
+# def update(filename):
+#     if not os.path.exists(f"./{filename}"):
+#         return "Give file doesn't exist, select on of these:<br/> " + constructListOutput(getJsonFiles())
+#     with open(filename, 'r', encoding='utf-8') as json_file:
+#         data = json.load(json_file)
 
 
 

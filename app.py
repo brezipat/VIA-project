@@ -1,4 +1,4 @@
-from flask import Flask, redirect, render_template, request, jsonify
+from flask import Flask, redirect, render_template, request, jsonify, url_for
 from googleapiclient.discovery import build
 import os.path
 import pickle
@@ -134,12 +134,11 @@ def viewFile(filename='', path=''):
     return current
 
 
-@app.route('/Json/<string:filename>/update', methods=["POST"])
-def update(filename):
+def updateJson(filename, new_json):
     if not os.path.exists(f"./jsonData/{filename}"):
-        return "Give file doesn't exist, select on of these:<br/> " + constructListOutput(getJsonFiles())
-    with open(f"./jsonData/{filename}", 'r', encoding='utf-8') as json_file:
-        data = json.load(json_file)
+        os.makedirs(f"./jsonData/{filename}")
+    with open(f"./jsonData/{filename}", 'w', encoding='utf-8') as json_file:
+        json.dump(new_json, json_file)
 
 
 @app.route('/placeSearch', methods=['POST'])
@@ -150,7 +149,7 @@ def placeSearch():
         d = data[entry]
         d['coords'] = d['coords'].replace("'", "&apos;")
         d['coords'] = d['coords'].replace('"', f'\\"')
-        print(d)
+        # print(d)
         new_label = '<label onclick=\'' \
                     'document.getElementById("coordinate_search_text").value = "%s";' \
                     'document.getElementById("place_marker_coords").value = "%s"' \
@@ -162,15 +161,27 @@ def placeSearch():
     return resp
 
 
+@app.route('/updateJsonFile', methods=['PUT'])
+def updateJsonFile():
+    data = request.get_json()
+    print(data)
+    filename = "markers.json"
+    updateJson(filename, data)
+    return "done"
+
+
 @app.route('/processMarkers', methods=['POST'])
 def processMarkers():
     data = request.get_json()
-    print(data)
+    filename = "markers.json"
+    updateJson(filename, data)
+    # print(data)
     table = "<table>" \
             "<tr>" \
-            "<td>Jméno značky</td>" \
-            "<td>Souřadnice značky</td>" \
-            "<td>Informace značky</td>" \
+                "<th width='120'>Marker Name</th>" \
+                "<th width='250'>Marker Coordinates</th>" \
+                "<th width='800'>Marker Information</th>" \
+                "<th width='200'>Marker Links</th>" \
             "</tr>"
     for key in data:
         table += "<tr>"
@@ -178,7 +189,11 @@ def processMarkers():
         ident = marker_data["id"]
         coords = marker_data["coords"]
         info = marker_data["info"]
-        table += f"<td>{ident}</td><td>{coords}</td><td>{info}</td>"
+        links = ""
+        for placeholder in marker_data["links"]:
+            link = marker_data["links"][placeholder]
+            links += '  ' + link
+        table += f"<td>{ident}</td><td>{coords}</td><td>{info}</td><td>{links}</td>"
         table += "</tr>"
     table += "</table>"
     resp_dict = {'table': table}
@@ -187,11 +202,15 @@ def processMarkers():
     # print(table)
     return resp
 
-@app.route('/map', methods=['POST', 'GET'])
+@app.route('/map')
 def map():
-    if request.method == 'GET':
-        loggedIn = validCredsExist()
-        return render_template("map.html", loggedIn=loggedIn)
+    data = {}
+    loggedIn = validCredsExist()
+    if os.path.exists(f"./jsonData/markers.json"):
+        if os.path.getsize(f"./jsonData/markers.json") > 2:
+            with open(f"./jsonData/markers.json", 'r', encoding='utf-8') as json_file:
+                data = json.load(json_file)
+    return render_template("map.html", loggedIn=loggedIn, markersData=data)
 
 
 @app.route('/fileSystemRefresher')
@@ -215,7 +234,12 @@ def fileSystem(path=''):
     if not tree:
         tree = init_tree(service)
     data = findFiles(path)
-    return render_template("fileSystem.html", loggedIn=True, current=data[0], parent=data[1], children=data[2])
+    markersData = {}
+    if os.path.exists(f"./jsonData/markers.json"):
+        if os.path.getsize(f"./jsonData/markers.json") > 2:
+            with open(f"./jsonData/markers.json", 'r', encoding='utf-8') as json_file:
+                markersData = json.load(json_file)
+    return render_template("fileSystem.html", loggedIn=True, current=data[0], parent=data[1], children=data[2], markersData=markersData)
 
 
 app.run(debug=True)

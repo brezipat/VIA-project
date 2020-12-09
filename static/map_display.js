@@ -86,12 +86,12 @@ marker_layer.enable();
 
 function updateMarkersTable(){
     markers_obj = {};
-//    console.log(markers);
     markers.forEach((element, index) => {
         data_obj = {};
         data_obj['id'] = element['_id'];
         data_obj['coords'] = element['_coords'].toWGS84(2).reverse().join(", ");
         data_obj['info'] = element['_info'];
+        data_obj['links'] = element['_links'];
         markers_obj[index] = data_obj;
     });
 //    console.log(markers_obj);
@@ -116,6 +116,7 @@ function delete_marker() {
     markers.forEach((element, index) => {
         if (element['_id'] === name) {
             marker_index = index;
+            marker_layer.removeMarker(element);
         }
     });
     if (marker_index == -1) {
@@ -126,10 +127,7 @@ function delete_marker() {
     }
 }
 
-function place_marker() {
-    var name = document.getElementById("place_marker_name").value;
-    var info = document.getElementById("place_marker_info").value;
-    var coords = document.getElementById("place_marker_coords").value;
+function place_marker_util(name, info, coords) {
     var c = SMap.Coords.fromWGS84(coords);
     var name_match = "no";
     var coord_match = "no"
@@ -152,6 +150,7 @@ function place_marker() {
         var marker = new SMap.Marker(c, name, options);
         marker.decorate(SMap.Marker.Feature.Card, card);
         marker['_info'] = info;
+        marker['_links'] = {};
         markers.push(marker);
         marker_layer.addMarker(marker);
         updateMarkersTable()
@@ -160,6 +159,42 @@ function place_marker() {
     } else {
         alert("Marker on such coordinates already exists. You can't place two markers on top of each other!")
     }
+}
+
+function createMarkersFromJson(json) {
+//    console.log("logging json")
+//    console.log(json);
+    for (var key in json) {
+        item = json[key];
+        var name = item['id'];
+        var info = item['info'];
+        var c = item['coords'];
+        var coords = SMap.Coords.fromWGS84(c);
+        var links = item['links'];
+//        console.log(links);
+        var options = {title: name};
+        var card = new SMap.Card();
+        body_html = info + '<br/>';
+        for (link in links) {
+            body_html = body_html + '  ' + links[link];
+        }
+//        console.log(body_html);
+        card.getBody().innerHTML = body_html;
+        var marker = new SMap.Marker(coords, name, options);
+        marker.decorate(SMap.Marker.Feature.Card, card);
+        marker['_links'] = links;
+        marker['_info'] = info;
+        markers.push(marker);
+        marker_layer.addMarker(marker);
+    }
+    updateMarkersTable();
+}
+
+function place_marker(){
+    var name = document.getElementById("place_marker_name").value;
+    var info = document.getElementById("place_marker_info").value;
+    var coords = document.getElementById("place_marker_coords").value;
+    place_marker_util(name, info, coords);
 }
 
 var form = JAK.gel("form");

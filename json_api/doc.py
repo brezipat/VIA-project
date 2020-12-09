@@ -53,13 +53,13 @@ class ListJsonByPath(Resource):
                 return current
         return current
 
-@movies_name_space.route("/<string:filename>/replace")
-class AddToJson(Resource):
-    @app.doc(responses={200: 'OK'}, description="Replaces existing json file with new one that arrived in the post request message.")
-    def post(self, filename):
-        if not os.path.exists(f"./{filename}"):
-            movies_name_space.abort(400, status="File doesn't exist", statusCode="400")
-        return "Replaced existing json file with new one"
+# @movies_name_space.route("/<string:filename>/replace")
+# class AddToJson(Resource):
+#     @app.doc(responses={200: 'OK'}, description="Replaces existing json file with new one that arrived in the post request message.")
+#     def post(self, filename):
+#         if not os.path.exists(f"./{filename}"):
+#             movies_name_space.abort(400, status="File doesn't exist", statusCode="400")
+#         return "Replaced existing json file with new one"
 
 
 flask_app.run()
