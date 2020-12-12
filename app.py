@@ -1,4 +1,5 @@
 from flask import Flask, redirect, render_template, request, jsonify, url_for
+import requests
 from googleapiclient.discovery import build
 import os.path
 import pickle
@@ -94,6 +95,8 @@ def logout():
 @app.route('/')
 def index():
     loggedIn = validCredsExist()
+    # test = requests.get('http://127.0.0.1:5000/Json')
+    # print(test.content)
     return render_template("homepage.html", loggedIn=loggedIn)
 
 def getJsonFiles():
@@ -121,7 +124,8 @@ def jsons():
 @app.route('/Json/<string:filename>/<path>')
 def viewFile(filename='', path=''):
     if not os.path.exists(f"./jsonData/{filename}"):
-        return "Give file doesn't exist, select on of these:<br/> " + constructListOutput(getJsonFiles())
+        return "Given file doesn't exist, select on of these:<br/> " + constructListOutput(getJsonFiles())
+        # return "Given file doesn't exist, select on of these:<br/> " + constructListOutput(getJsonFiles())
     s = path.split(',')
     with open(f"./jsonData/{filename}", 'r', encoding='utf-8') as json_file:
         data = json.load(json_file)
