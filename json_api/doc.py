@@ -30,8 +30,8 @@ class ListJsonFiles(Resource):
 class ListJson(Resource):
     @app.doc(responses={200: 'OK'}, description="View whole json file")
     def get(self, filename):
-        if not os.path.exists(f"./{filename}"):
-            movies_name_space.abort(400, status="File doesn't exist", statusCode="400")
+        if not os.path.exists(f"./{filename}") or os.path.getsize(f"./{filename}") <= 2:
+            movies_name_space.abort(400, status="File doesn't exist or it is empty", statusCode="400")
         with open(filename, 'r', encoding='utf-8') as json_file:
             data = json.load(json_file)
         return data
@@ -41,7 +41,7 @@ class ListJsonByPath(Resource):
     @app.doc(responses={200: 'OK'}, description="Views section of json file based on the give identifiers path. Seperate identifiers with comma")
     def get(self, filename, path):
         if not os.path.exists(f"./{filename}"):
-            movies_name_space.abort(400, status="File doesn't exist", statusCode="400")
+            movies_name_space.abort(400, status="File doesn't exist or it is empty", statusCode="400")
         with open(filename, 'r', encoding='utf-8') as json_file:
             data = json.load(json_file)
         s = path.split(',')
@@ -53,13 +53,16 @@ class ListJsonByPath(Resource):
                 return current
         return current
 
-# @movies_name_space.route("/<string:filename>/replace")
-# class AddToJson(Resource):
-#     @app.doc(responses={200: 'OK'}, description="Replaces existing json file with new one that arrived in the post request message.")
-#     def post(self, filename):
-#         if not os.path.exists(f"./{filename}"):
-#             movies_name_space.abort(400, status="File doesn't exist", statusCode="400")
-#         return "Replaced existing json file with new one"
+@movies_name_space.route("/<string:filename>/replace")
+class AddToJson(Resource):
+    @app.doc(responses={200: 'OK'}, description="Creates new json file or replaces en existing json file with the new one that arrived in the post request message.")
+    def put(self, filename):
+        if not os.path.exists(f"./{filename}"):
+            ret = "Successfully created  new json file"
+            # movies_name_space.abort(400, status="File doesn't exist", statusCode="400")
+        else:
+            ret = "Successfully replaced existing json file with the new one"
+        return ret
 
 
 flask_app.run()

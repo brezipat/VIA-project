@@ -95,7 +95,8 @@ def logout():
 @app.route('/')
 def index():
     loggedIn = validCredsExist()
-    # test = requests.get('http://127.0.0.1:5000/Json')
+    # dictToSend = {'question': 'what is the answer?'}
+    # test = requests.put('http://127.0.0.1:5000/Json/markers.json/replace', json=dictToSend)
     # print(test.content)
     return render_template("homepage.html", loggedIn=loggedIn)
 
@@ -123,8 +124,8 @@ def jsons():
 @app.route('/Json/<string:filename>')
 @app.route('/Json/<string:filename>/<path>')
 def viewFile(filename='', path=''):
-    if not os.path.exists(f"./jsonData/{filename}"):
-        return "Given file doesn't exist, select on of these:<br/> " + constructListOutput(getJsonFiles())
+    if not os.path.exists(f"./jsonData/{filename}") or os.path.getsize(f"./jsonData/{filename}") <= 2:
+        return "Given file doesn't exist or is empty, select one of these:<br/> " + constructListOutput(getJsonFiles())
         # return "Given file doesn't exist, select on of these:<br/> " + constructListOutput(getJsonFiles())
     s = path.split(',')
     with open(f"./jsonData/{filename}", 'r', encoding='utf-8') as json_file:
@@ -138,11 +139,29 @@ def viewFile(filename='', path=''):
     return current
 
 
-def updateJson(filename, new_json):
+@app.route("/Json/<string:filename>/replace", methods=['PUT'])
+def replaceJsonFile(filename):
+    data = request.get_json()
+    # print(data)
     if not os.path.exists(f"./jsonData/{filename}"):
         os.makedirs(f"./jsonData/{filename}")
+        ret = "Successfully created  new json file"
+    else:
+        ret = "Successfully replaced existing json file with the new one"
     with open(f"./jsonData/{filename}", 'w', encoding='utf-8') as json_file:
-        json.dump(new_json, json_file)
+        json.dump(data, json_file)
+    return ret
+
+
+def updateJson(filename, new_json):
+    data = new_json
+    ret = requests.put(f'http://127.0.0.1:5000/Json/{filename}/replace', json=data)
+    # print(ret.text)
+    return ret.text
+    # if not os.path.exists(f"./jsonData/{filename}"):
+    #     os.makedirs(f"./jsonData/{filename}")
+    # with open(f"./jsonData/{filename}", 'w', encoding='utf-8') as json_file:
+    #     json.dump(new_json, json_file)
 
 
 @app.route('/placeSearch', methods=['POST'])
@@ -163,15 +182,6 @@ def placeSearch():
     resp = jsonify(resp_dic)
     resp.headers['Access-Control-Allow-Origin'] = '*'
     return resp
-
-
-@app.route('/updateJsonFile', methods=['PUT'])
-def updateJsonFile():
-    data = request.get_json()
-    print(data)
-    filename = "markers.json"
-    updateJson(filename, data)
-    return "done"
 
 
 @app.route('/processMarkers', methods=['POST'])
@@ -208,12 +218,14 @@ def processMarkers():
 
 @app.route('/map')
 def map():
-    data = {}
+    # data = {}
     loggedIn = validCredsExist()
-    if os.path.exists(f"./jsonData/markers.json"):
-        if os.path.getsize(f"./jsonData/markers.json") > 2:
-            with open(f"./jsonData/markers.json", 'r', encoding='utf-8') as json_file:
-                data = json.load(json_file)
+    data = requests.get('http://127.0.0.1:5000/Json/markers.json').json()
+    # print(data)
+    # if os.path.exists(f"./jsonData/markers.json"):
+    #     if os.path.getsize(f"./jsonData/markers.json") > 2:
+    #         with open(f"./jsonData/markers.json", 'r', encoding='utf-8') as json_file:
+    #             data = json.load(json_file)
     return render_template("map.html", loggedIn=loggedIn, markersData=data)
 
 
@@ -238,11 +250,12 @@ def fileSystem(path=''):
     if not tree:
         tree = init_tree(service)
     data = findFiles(path)
-    markersData = {}
-    if os.path.exists(f"./jsonData/markers.json"):
-        if os.path.getsize(f"./jsonData/markers.json") > 2:
-            with open(f"./jsonData/markers.json", 'r', encoding='utf-8') as json_file:
-                markersData = json.load(json_file)
+    markersData = requests.get('http://127.0.0.1:5000/Json/markers.json').json()
+    # markersData = {}
+    # if os.path.exists(f"./jsonData/markers.json"):
+    #     if os.path.getsize(f"./jsonData/markers.json") > 2:
+    #         with open(f"./jsonData/markers.json", 'r', encoding='utf-8') as json_file:
+    #             markersData = json.load(json_file)
     return render_template("fileSystem.html", loggedIn=True, current=data[0], parent=data[1], children=data[2], markersData=markersData)
 
 
