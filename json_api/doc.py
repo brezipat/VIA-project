@@ -19,7 +19,7 @@ movies_name_space = app.namespace("Json", description='Work with json files')
 class ListJsonFiles(Resource):
     @app.doc(responses={200: 'OK'}, description="List all available json files")
     def get(self):
-        data_files = [f for f in listdir('./') if isfile(join('./', f))]
+        data_files = [f for f in listdir('./jsonData/') if isfile(join('./jsonData', f))]
         ret = []
         for file in data_files:
             if file.split('.')[-1] == 'json':
@@ -30,9 +30,9 @@ class ListJsonFiles(Resource):
 class ListJson(Resource):
     @app.doc(responses={200: 'OK'}, description="View whole json file")
     def get(self, filename):
-        if not os.path.exists(f"./{filename}") or os.path.getsize(f"./{filename}") <= 2:
+        if not os.path.exists(f"./jsonData/{filename}") or os.path.getsize(f"./jsonData/{filename}") <= 2:
             movies_name_space.abort(400, status="File doesn't exist or it is empty", statusCode="400")
-        with open(filename, 'r', encoding='utf-8') as json_file:
+        with open(f"./jsonData/{filename}", 'r', encoding='utf-8') as json_file:
             data = json.load(json_file)
         return data
 
@@ -40,9 +40,9 @@ class ListJson(Resource):
 class ListJsonByPath(Resource):
     @app.doc(responses={200: 'OK'}, description="Views section of json file based on the give identifiers path. Seperate identifiers with comma")
     def get(self, filename, path):
-        if not os.path.exists(f"./{filename}"):
+        if not os.path.exists(f"./jsonData/{filename}"):
             movies_name_space.abort(400, status="File doesn't exist or it is empty", statusCode="400")
-        with open(filename, 'r', encoding='utf-8') as json_file:
+        with open(f"./jsonData/{filename}", 'r', encoding='utf-8') as json_file:
             data = json.load(json_file)
         s = path.split(',')
         current = data
@@ -57,7 +57,9 @@ class ListJsonByPath(Resource):
 class AddToJson(Resource):
     @app.doc(responses={200: 'OK'}, description="Creates new json file or replaces en existing json file with the new one that arrived in the post request message.")
     def put(self, filename):
-        if not os.path.exists(f"./{filename}"):
+        if not os.path.exists(f"./jsonData/"):
+            os.makedirs(f"./jsonData/")
+        if not os.path.exists(f"./jsonData/{filename}"):
             ret = "Successfully created  new json file"
             # movies_name_space.abort(400, status="File doesn't exist", statusCode="400")
         else:

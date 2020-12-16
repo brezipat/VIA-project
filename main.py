@@ -3,7 +3,7 @@ from flask_restplus import Api, Resource
 import json
 
 """Load JSON"""
-with open("json_api/movies.json", "r", encoding="utf-8") as infile:
+with open("json_api/jsonData/movies.json", "r", encoding="utf-8") as infile:
     movies_json = json.load(infile)
 
 """Define Flask app"""

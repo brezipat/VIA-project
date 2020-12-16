@@ -143,8 +143,9 @@ def viewFile(filename='', path=''):
 def replaceJsonFile(filename):
     data = request.get_json()
     # print(data)
+    if not os.path.exists(f"./jsonData/"):
+        os.makedirs(f"./jsonData/")
     if not os.path.exists(f"./jsonData/{filename}"):
-        os.makedirs(f"./jsonData/{filename}")
         ret = "Successfully created  new json file"
     else:
         ret = "Successfully replaced existing json file with the new one"
@@ -259,4 +260,5 @@ def fileSystem(path=''):
     return render_template("fileSystem.html", loggedIn=True, current=data[0], parent=data[1], children=data[2], markersData=markersData)
 
 
-app.run(debug=True)
+if __name__ == "__main__":
+    app.run()
