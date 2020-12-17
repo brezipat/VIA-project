@@ -3,7 +3,6 @@ from googleapiclient.discovery import build
 import os.path
 import pickle
 from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
 import tree as t
 
 app = Flask(__name__)

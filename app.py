@@ -1,4 +1,4 @@
-from flask import Flask, redirect, render_template, request, jsonify, url_for
+from flask import Flask, redirect, render_template, request, jsonify
 import requests
 from googleapiclient.discovery import build
 import os.path
@@ -101,7 +101,7 @@ def index():
     return render_template("homepage.html", loggedIn=loggedIn)
 
 def getJsonFiles():
-    data_files = [f for f in listdir('./jsonData/') if isfile(join('./jsonData/', f))]
+    data_files = [f for f in listdir('jsonData/') if isfile(join('jsonData/', f))]
     ret = []
     for file in data_files:
         if file.split('.')[-1] == 'json':
@@ -124,11 +124,11 @@ def jsons():
 @app.route('/Json/<string:filename>')
 @app.route('/Json/<string:filename>/<path>')
 def viewFile(filename='', path=''):
-    if not os.path.exists(f"./jsonData/{filename}") or os.path.getsize(f"./jsonData/{filename}") <= 2:
+    if not os.path.exists(f"jsonData/{filename}") or os.path.getsize(f"jsonData/{filename}") <= 2:
         return "Given file doesn't exist or is empty, select one of these:<br/> " + constructListOutput(getJsonFiles())
         # return "Given file doesn't exist, select on of these:<br/> " + constructListOutput(getJsonFiles())
     s = path.split(',')
-    with open(f"./jsonData/{filename}", 'r', encoding='utf-8') as json_file:
+    with open(f"jsonData/{filename}", 'r', encoding='utf-8') as json_file:
         data = json.load(json_file)
     current = data
     for identifier in s:
@@ -143,13 +143,13 @@ def viewFile(filename='', path=''):
 def replaceJsonFile(filename):
     data = request.get_json()
     # print(data)
-    if not os.path.exists(f"./jsonData/"):
-        os.makedirs(f"./jsonData/")
-    if not os.path.exists(f"./jsonData/{filename}"):
+    if not os.path.exists(f"jsonData/"):
+        os.makedirs(f"jsonData/")
+    if not os.path.exists(f"jsonData/{filename}"):
         ret = "Successfully created  new json file"
     else:
         ret = "Successfully replaced existing json file with the new one"
-    with open(f"./jsonData/{filename}", 'w', encoding='utf-8') as json_file:
+    with open(f"jsonData/{filename}", 'w', encoding='utf-8') as json_file:
         json.dump(data, json_file)
     return ret
 
