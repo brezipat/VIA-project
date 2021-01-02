@@ -12,21 +12,37 @@
         }
     </style>
     <meta charset="utf-8" />
+    <link rel="icon" href="data:,">
 	<script type="text/javascript" src="https://api.mapy.cz/loader.js"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
     <script type="text/javascript">Loader.lang = "cs"; Loader.load(null, {poi:true});</script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
+    <script>
+        function start() {
+            gapi.load('auth2', function() {
+                auth2 = gapi.auth2.init({
+                    client_id: '332724366289-hc55qi416mhb8datihe042ml49k5j97j.apps.googleusercontent.com',
+                    scope: 'https://www.googleapis.com/auth/drive'
+                });
+            });
+        }
+    </script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
     <ul>
-         <li><a href="/">Home</a></li>
-         <li><a href="/map">Map</a></li>
-         <li><a href="/fileSystem/root">File System</a></li>
          {% if loggedIn %}
-            <li style="float:right"><a href="/logout">Logout</a></li>
+             <li><a href="/{{ user }}">Home</a></li>
+             <li><a href="/map/{{ user }}">Map</a></li>
+             <li><a href="/fileSystem/{{ user }}/root">File System</a></li>
+             <li style="float:right"><a href="/logout/{{ user }}">Logout</a></li>
          {% else %}
-            <li style="float:right"><a href="/login">Login</a></li>
+             <li><a href="/">Home</a></li>
+             <li><a href="/map">Map</a></li>
+             <li><a href="/fileSystem">File System</a></li>
+             <li style="float:right"><a id="login">Login</a></li>
          {% endif %}
     </ul>
 	<div id="mapa" style="width:800px; height:600px;"></div>
@@ -43,25 +59,62 @@
     <label>Coordinates to search for on map: <br/> <input type="text" id="coordinate_search_text" size="50"/></label>
     <button id="coordinate_search_button">Find</button>
     <br/>
-    <div>
-        <p>
-            <label>Marker name: <br/> <input type="text" id="place_marker_name" size="40"/></label><br/>
-            <label>Additional marker info:</label><br/>
-            <textarea id="place_marker_info" rows="5" cols="50"></textarea><br/>
-            <label>Marker Coordinates: <br/> <input type="text" id="place_marker_coords" size="50"/></label>
-            <button id="place_marker_button">Place Marker</button>
-            <br/>
-        </p>
-        <p>
-            <label>Insert name of marker you want to delete: <br/> <input type="text" id="delete_marker_name" size="40"/></label><br/>
-            <button id="delete_marker_button">Delete Marker</button>
-        </p>
-    </div>
+    <script type="text/javascript" src="../static/map_display.js"></script>
+    <script>console.log("duhio")</script>
+    {% if loggedIn %}
+        <script>console.log("{{ user }}")</script>
+        <div>
+            <p>
+                <label>Marker name: <br/> <input type="text" id="place_marker_name" size="40"/></label><br/>
+                <label>Additional marker info:</label><br/>
+                <textarea id="place_marker_info" rows="5" cols="50"></textarea><br/>
+                <label>Marker Coordinates: <br/> <input type="text" id="place_marker_coords" size="50"/></label>
+                <button id="place_marker_button" onclick="place_marker('{{ user|string }}')">Place Marker</button>
+                <br/>
+            </p>
+            <p>
+                <label>Insert name of marker you want to delete: <br/> <input type="text" id="delete_marker_name" size="40"/></label><br/>
+                <button id="delete_marker_button" onclick="delete_marker('{{ user|string }}')">Delete Marker</button>
+            </p>
+        </div>
+    {% endif %}
     <table id="markersTable">
     </table>
-    <script type="text/javascript" src="../static/map_display.js"></script>
     <script>
-        createMarkersFromJson({{ markersData|tojson }})
+        {% if markersData %}
+            createMarkersFromJson({{ markersData|tojson }}, '{{ user|string }}')
+        {% endif %}
+    </script>
+
+
+
+    <script>
+        $('#login').click(function() {
+            // signInCallback defined in step 6.
+            auth2.grantOfflineAccess().then(signInCallback);
+        });
+    </script>
+    <script>
+        function signInCallback(authResult) {
+            if (authResult['code']) {
+                $('#signinButton').attr('style', 'display: none');
+                $.ajax({
+                    type: 'POST',
+                    url: '/storeauthcode',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    contentType: 'application/octet-stream; charset=utf-8',
+                    success: function(result) {
+                        window.location.replace("/map/" + result);
+                    },
+                    processData: false,
+                    data: authResult['code']
+                });
+            } else {
+                // There was an error.
+            }
+        }
     </script>
 </body>
 </html>

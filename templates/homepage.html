@@ -4,19 +4,146 @@
     <meta charset="UTF-8">
     <title>Homepage</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="data:,">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
+    <script>
+        function start() {
+            gapi.load('auth2', function() {
+                auth2 = gapi.auth2.init({
+                    client_id: '332724366289-hc55qi416mhb8datihe042ml49k5j97j.apps.googleusercontent.com',
+                    scope: 'https://www.googleapis.com/auth/drive'
+                });
+            });
+        }
+    </script>
 </head>
 <body>
      <ul>
-         <li><a href="/">Home</a></li>
-         <li><a href="/map">Map</a></li>
-         <li><a href="/fileSystem/root">File System</a></li>
+{#         <li><a href="/">Home</a></li>#}
+{#         <li><a href="/map">Map</a></li>#}
+{#         <li><a href="/fileSystem">File System</a></li>#}
+{#         {% if loggedIn %}#}
+{#            <li style="float:right"><a href="/logout">Logout</a></li>#}
+{#         {% else %}#}
+{#            <li style="float:right"><a id="login">Login</a></li>#}
+{#         {% endif %}#}
          {% if loggedIn %}
-            <li style="float:right"><a href="/logout">Logout</a></li>
+             <li><a href="/{{ user }}">Home</a></li>
+             <li><a href="/map/{{ user }}">Map</a></li>
+             <li><a href="/fileSystem/{{ user }}/root">File System</a></li>
+             <li style="float:right"><a href="/logout/{{ user }}">Logout</a></li>
          {% else %}
-            <li style="float:right"><a href="/login">Login</a></li>
+             <li><a href="/">Home</a></li>
+             <li><a href="/map">Map</a></li>
+             <li><a href="/fileSystem">File System</a></li>
+             <li style="float:right"><a id="login">Login</a></li>
          {% endif %}
     </ul>
-    <h1>Welcome to homepage!</h1>
+    <h1>Welcome to traveller's notebook homepage!</h1>
+     <p>
+         The Application allows users to log into their google account and link files and folders in their available in their google drive
+         to various places they visited, would like to visit or are interested in. The application offers a map with search function that allows
+         user to look for existing places a save these locations into a database as a marker. Users can then add to these markers shareable links to files
+         or folders in their google drive. The app allows to access these files either directly from the map or from the table providing an overview of existing
+         markers.
+     </p>
+     <h2>Logging in</h2>
+     <p>
+         To use the app you need to first log in into your google account which will provide the app access to your google drive files.
+         You can log in by hitting the login button in the top right of the page in the navigation panel <br/>
+     </p>
+     <p>
+         <img src="{{url_for('static', filename='login.png')}}" height="50" width="800"><br/>
+     </p>
+    <h2>Map</h2>
+     <p>
+         To access the map hit the "Map" button in the navigation panel. This will redirect you to a page with map where you can see you current location
+         markers. You can also use the map to look around, pan the map, zoom in, zoom out and all other typical functions you can do with a map.
+     </p>
+     <p>
+        <img src="{{url_for('static', filename='map.png')}}" height="450" width="600"><br/>
+     </p>
+     <h2>Map search and markers</h2>
+     <p>
+         On the map page you can use provided fields to search for locations you are interested for. This will list all matches for your queried search.
+         You can move you map to show you one of the resulting locations using the "Find" button. In the input field you need to insert coordinates
+         of a place you wish to find but don't worry you don't have to write it manually yourself. Simply click on one of the search results and the
+         coordinates of the location will be copied automatically into all input fields that require them. You can also save a marker for your location
+         by filling out the marker's name field. Optionally you can also add some additional information and finally place the marker using the "Place Marker" button.
+     </p>
+     <p>
+        <img src="{{url_for('static', filename='map_search_described.png')}}" height="500" width="800"><br/>
+     </p>
+     <p>
+         This table displays all the markers you have saved so far. The table offers all information available at the markers. The Markers Links collumns are
+         google drive links that you can add to markers in the File System tab. If you wish to delete a marker, simply input marker name in the delete marker field and press
+         "Delete Marker" button
+     </p>
+     <p>
+        <img src="{{url_for('static', filename='markers_described.png')}}" height="275" width="1000"><br/>
+     </p>
+     <h2>Google Drive Filesystem</h2>
+     <p>
+         By pressing the "File System" button in the navigation bar you can redirect yourself to the file system page. If you are logged in to your
+         google account you can use this table to browse your google drive files and use their drive link to view the files or folders in your browser.
+         Simply click on the folders to change current directory. Clicking on the icon in the table will copy the drive link to the "File Link" input field
+         bellow. If you've performed any changes in you google drive while working with the app press the "Refresh File System" button in order to see the changes.
+     </p>
+     <p>
+        <img src="{{url_for('static', filename='file_system_described.png')}}" height="300" width="800"><br/>
+     </p>
+     <p>
+         Here you can see your map markers you have created in the Map tab. This can be used to add google drive links to your marker and use them to redirect
+         to the file. In order to add link to a marker, click on the icon of one of the files above to copy its link into "File Link" field. Then enter name
+         of the marker you wish to add link to and finally define the name with which the link will be displayed. The press the "Add link to marker" button.
+         You can also delete link from a marker be specifying the markers name and link name.
+     </p>
+     <p>
+        <img src="{{url_for('static', filename='file_system_markers_described.png')}}" height="300" width="1000"><br/>
+     </p>
+     <h2>View marker information in the map</h2>
+     <p>
+         When you are done you can move to the map tab. There simply click on of the markers in the map and the app will display the information
+         as well as the drive links associated with the marker.
+     </p>
+     <p>
+        <img src="{{url_for('static', filename='map_marker_data.png')}}" height="450" width="600"><br/>
+     </p>
+     <h2>Log out</h2>
+     When you are done working with the app you can log out off your google account.
+     <p>
+        <img src="{{url_for('static', filename='logout.png')}}" height="50" width="800"><br/>
+     </p>
 
+
+    <script>
+        $('#login').click(function() {
+            // signInCallback defined in step 6.
+            auth2.grantOfflineAccess().then(signInCallback);
+        });
+    </script>
+    <script>
+        function signInCallback(authResult) {
+            if (authResult['code']) {
+                $('#signinButton').attr('style', 'display: none');
+                $.ajax({
+                    type: 'POST',
+                    url: '/storeauthcode',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    contentType: 'application/octet-stream; charset=utf-8',
+                    success: function(result) {
+                        window.location.replace("/" + result);
+                    },
+                    processData: false,
+                    data: authResult['code']
+                });
+            } else {
+                // There was an error.
+            }
+        }
+    </script>
 </body>
 </html>

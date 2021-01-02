@@ -9,41 +9,68 @@ import os
 from os import listdir
 from os.path import isfile, join
 import json
+from apiclient import discovery
+import httplib2
+from oauth2client import client
 
 app = Flask(__name__)
 
-service = None
-creds = None
-tree = None
+users_tools = {}
+# service = None
+# creds = None
+# tree = None
+# user = None
 
 
-def checkForExistingCredentials():
-    global creds
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
+# def checkForExistingCredentials(user):
+#     global users_tools
+#     # global creds
+#     # global user
+#     # if os.path.exists('token.pickle') and os.path.exists('user.pickle'):
+#     users_tools[user] = {"creds:": None, "service": None, "tree": None}
+#     if os.path.exists(f'token_{user}.pickle'):
+#         with open(f'token_{user}.pickle', 'rb') as token:
+#             # users_tools[user] = {"creds": None, "service": None, "tree": None}
+#             users_tools[user]["creds"] = pickle.load(token)
+#             users_tools[user]["service"] = createServiceFromCreds(users_tools[user]["creds"])
+#             users_tools[user]["tree"] = None
+#         return True
+#     return False
+#             # creds = pickle.load(token)
+#         # with open('user.pickle', 'rb') as user_file:
+#         #     user = pickle.load(user_file)
 
 
-def validCredsExist():
-    global creds
-    checkForExistingCredentials()
-    if not creds or not creds.valid:
-        # if creds and creds.expired and creds.refresh_token:
-        #     creds.refresh(Request())
-        # else:
-        return False
-    return True
+# def validCredsExist(user):
+#     # global creds
+#     global users_tools
+#     if not checkForExistingCredentials(user):
+#         return False
+#     # if not creds:
+#     # if not creds or not creds.valid:
+#     # if not creds or creds.expired:
+#     # if not creds:
+#     if not users_tools[user]["creds"]:
+#         # if creds and creds.expired and creds.refresh_token:
+#         #     creds.refresh(Request())
+#         # else:
+#         return False
+#     return True
 
 
-def createServiceFromCreds():
-    global service
-    global creds
+def createServiceFromCreds(creds):
+    # global service
+    # global creds
     service = build('drive', 'v3', credentials=creds)
+    return service
 
 
-def findFiles(path):
-    global service
-    global tree
+def findFiles(user, path):
+    global users_tools
+    # global service
+    # global tree
+    # service = users_tools[user]["service"]
+    tree = users_tools[user]["tree"]
     s = path.split(',')
     current = tree.getRoot()
     for i in range(len(s)):
@@ -66,39 +93,78 @@ def init_tree(service):
     return tree
 
 
-@app.route('/login')
-def authorize():
-    global creds
-    flow = InstalledAppFlow.from_client_secrets_file(
-        'credentials.json', 'https://www.googleapis.com/auth/drive')
-    creds = flow.run_local_server(port=0)
-    with open('token.pickle', 'wb') as token:
+# @app.route('/login')
+# def authorize():
+#     global creds
+#     flow = InstalledAppFlow.from_client_secrets_file(
+#         'credentials_old.json', 'https://www.googleapis.com/auth/drive')
+#     creds = flow.run_local_server(port=0)
+#     with open('token.pickle', 'wb') as token:
+#         pickle.dump(creds, token)
+#     createServiceFromCreds()
+#     return redirect('/')
+
+@app.route('/authCallback')
+def callback():
+    print("accessed callback")
+    return "called"
+
+
+@app.route('/storeauthcode', methods=['POST'])
+def storeauthcode():
+    global users_tools
+    # global creds
+    CLIENT_SECRET_FILE = 'client_secret.json'
+    auth_code = request.data
+    creds = client.credentials_from_clientsecrets_and_code(
+        CLIENT_SECRET_FILE,
+        ['https://www.googleapis.com/auth/drive', 'profile', 'email'],
+        auth_code)
+    user = creds.id_token['sub']
+    with open(f'token_{user}.pickle', 'wb') as token:
         pickle.dump(creds, token)
-    createServiceFromCreds()
-    return redirect('/')
+    service = createServiceFromCreds(creds)
+    users_tools[user] = {"creds": creds, "service": service, "tree": None}
+    print('_______________________________________________________________________________________________________________')
+    print(users_tools)
+    # user = creds.id_token['email'].split("@")[0]
+    # with open('user.pickle', 'wb') as user_file:
+    #     pickle.dump(user, user_file)
+    # email = creds.id_token['email']
+    # print(email)
+    # print(userid)
+    return user
 
 
-@app.route('/logout')
-def logout():
-    global creds
-    global service
-    global tree
-    creds = None
-    service = None
-    tree = None
-    os.remove('token.pickle')
-    # for key in list(session.keys()):
-    #     session.pop(key)
+@app.route('/logout/<user>')
+def logout(user):
+    global users_tools
+    print(
+        '_______________________________________________________________________________________________________________')
+    print(users_tools)
+    # global creds
+    # global service
+    # global tree
+    # global user
+    # creds = None
+    # service = None
+    # tree = None
+    # user = None
+    del users_tools[user]
+    os.remove(f'token_{user}.pickle')
+    # os.remove('user.pickle')
     return redirect('/')
 
 
 @app.route('/')
-def index():
-    loggedIn = validCredsExist()
-    # dictToSend = {'question': 'what is the answer?'}
-    # test = requests.put('http://127.0.0.1:5000/Json/markers.json/replace', json=dictToSend)
-    # print(test.content)
-    return render_template("homepage.html", loggedIn=loggedIn)
+@app.route('/<user>')
+def index(user=''):
+    # loggedIn = False
+    if user:
+        # if not validCredsExist(user):
+        #     return redirect('/')
+        return render_template("homepage.html", loggedIn=True, user=user)
+    return render_template("homepage.html", loggedIn=False, user=user)
 
 def getJsonFiles():
     data_files = [f for f in listdir('./jsonData/') if isfile(join('./jsonData/', f))]
@@ -125,7 +191,7 @@ def jsons():
 @app.route('/Json/<string:filename>/<path>')
 def viewFile(filename='', path=''):
     if not os.path.exists(f"./jsonData/{filename}") or os.path.getsize(f"./jsonData/{filename}") <= 2:
-        return "Given file doesn't exist or is empty, select one of these:<br/> " + constructListOutput(getJsonFiles())
+        return "Given file doesn't exist or is empty, select one of these:<br/> " + constructListOutput(getJsonFiles()), 400
         # return "Given file doesn't exist, select on of these:<br/> " + constructListOutput(getJsonFiles())
     s = path.split(',')
     with open(f"./jsonData/{filename}", 'r', encoding='utf-8') as json_file:
@@ -156,13 +222,9 @@ def replaceJsonFile(filename):
 
 def updateJson(filename, new_json):
     data = new_json
-    ret = requests.put(f'http://127.0.0.1:5000/Json/{filename}/replace', json=data)
-    # print(ret.text)
+    ret = requests.put(f'http://localhost:5000/Json/{filename}/replace', json=data)
+    # ret = requests.put(f'https://brezipat-via-app.herokuapp.com/Json/{filename}/replace', json=data)
     return ret.text
-    # if not os.path.exists(f"./jsonData/{filename}"):
-    #     os.makedirs(f"./jsonData/{filename}")
-    # with open(f"./jsonData/{filename}", 'w', encoding='utf-8') as json_file:
-    #     json.dump(new_json, json_file)
 
 
 @app.route('/placeSearch', methods=['POST'])
@@ -173,24 +235,21 @@ def placeSearch():
         d = data[entry]
         d['coords'] = d['coords'].replace("'", "&apos;")
         d['coords'] = d['coords'].replace('"', f'\\"')
-        # print(d)
         new_label = '<label onclick=\'' \
                     'document.getElementById("coordinate_search_text").value = "%s";' \
                     'document.getElementById("place_marker_coords").value = "%s"' \
                     '\'>%s, (%s)</label><br/>' % (d['coords'], d['coords'], d['label'], d['coords'])
         resp_dic[d['id']] = new_label
-    # resp_dic = {'html': '<label onclick="addNewElement()">I am new paragraph</label>'}
     resp = jsonify(resp_dic)
     resp.headers['Access-Control-Allow-Origin'] = '*'
     return resp
 
 
-@app.route('/processMarkers', methods=['POST'])
-def processMarkers():
+@app.route('/processMarkers/<user>', methods=['POST'])
+def processMarkers(user=''):
     data = request.get_json()
-    filename = "markers.json"
+    filename = f"{user}_markers.json"
     updateJson(filename, data)
-    # print(data)
     table = "<table>" \
             "<tr>" \
                 "<th width='120'>Marker Name</th>" \
@@ -214,51 +273,71 @@ def processMarkers():
     resp_dict = {'table': table}
     resp = jsonify(resp_dict)
     resp.headers['Access-Control-Allow-Origin'] = '*'
-    # print(table)
     return resp
 
 @app.route('/map')
-def map():
-    # data = {}
-    loggedIn = validCredsExist()
-    data = requests.get('http://127.0.0.1:5000/Json/markers.json').json()
-    # print(data)
-    # if os.path.exists(f"./jsonData/markers.json"):
-    #     if os.path.getsize(f"./jsonData/markers.json") > 2:
-    #         with open(f"./jsonData/markers.json", 'r', encoding='utf-8') as json_file:
-    #             data = json.load(json_file)
-    return render_template("map.html", loggedIn=loggedIn, markersData=data)
+@app.route('/map/<user>')
+def map(user=''):
+    global users_tools
+    # global user
+    # if loggedIn:
+    print(
+        '_______________________________________________________________________________________________________________')
+    print(users_tools)
+    if user:
+        # if not validCredsExist(user):
+        #     return redirect('/map')
+        filename = f"{user}_markers.json"
+        resp = requests.get(f'http://localhost:5000/Json/{filename}')
+        # resp = requests.get(f'https://brezipat-via-app.herokuapp.com/Json/{filename}')
+        if resp.status_code != 400:
+            data = resp.json()
+            return render_template("map.html", loggedIn=True, markersData=data, user=user)
+        return render_template("map.html", loggedIn=True, markersData=None, user=user)
+    return render_template("map.html", loggedIn=False, markersData=None, user=user)
 
 
-@app.route('/fileSystemRefresher')
-def refresher():
-    global tree
-    tree = None
-    return redirect('/fileSystem/root')
-
+@app.route('/fileSystemRefresher/<user>')
+def refresher(user=''):
+    global users_tools
+    # global tree
+    # tree = None
+    users_tools[user]["tree"] = None
+    return redirect(f'/fileSystem/{user}/root')
 
 @app.route('/fileSystem')
-@app.route('/fileSystem/<path>')
-def fileSystem(path=''):
-    global service
-    global tree
-    if not service:
-        if not validCredsExist():
-            service = None
-            tree = None
-            return render_template("fileSystem.html", loggedIn=False)
-        createServiceFromCreds()
-    if not tree:
-        tree = init_tree(service)
-    data = findFiles(path)
-    markersData = requests.get('http://127.0.0.1:5000/Json/markers.json').json()
-    # markersData = {}
-    # if os.path.exists(f"./jsonData/markers.json"):
-    #     if os.path.getsize(f"./jsonData/markers.json") > 2:
-    #         with open(f"./jsonData/markers.json", 'r', encoding='utf-8') as json_file:
-    #             markersData = json.load(json_file)
-    return render_template("fileSystem.html", loggedIn=True, current=data[0], parent=data[1], children=data[2], markersData=markersData)
+@app.route('/fileSystem/<user>')
+@app.route('/fileSystem/<user>/<path>')
+def fileSystem(user='', path=''):
+    global users_tools
+    # global service
+    # global tree
+    # global user
+    # if not service or not user:
+    print(
+        '_______________________________________________________________________________________________________________')
+    print(users_tools)
+    if not user:
+        # if not validCredsExist() or not user:
+        #     service = None
+        #     tree = None
+        return render_template("fileSystem.html", loggedIn=False)
+        # createServiceFromCreds()
+    # if not validCredsExist(user):
+    #     return redirect('fileSystem/')
+    if not users_tools[user]["tree"]:
+        # tree = init_tree(service)
+        users_tools[user]["tree"] = init_tree(users_tools[user]["service"])
+    data = findFiles(user, path)
+    filename = f"{user}_markers.json"
+    resp = requests.get(f'http://localhost:5000/Json/{filename}')
+    # resp = requests.get(f'https://brezipat-via-app.herokuapp.com/Json/{filename}')
+    if resp.status_code != 400:
+        markersData = resp.json()
+        return render_template("fileSystem.html", loggedIn=True, current=data[0], parent=data[1], children=data[2], markersData=markersData, user=user)
+    return render_template("fileSystem.html", loggedIn=True, current=data[0], parent=data[1], children=data[2], markersData=None, user=user)
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
+    # print(os.getcwd())

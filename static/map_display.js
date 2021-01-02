@@ -84,7 +84,8 @@ var marker_layer = new SMap.Layer.Marker();
 m.addLayer(marker_layer);
 marker_layer.enable();
 
-function updateMarkersTable(){
+function updateMarkersTable(user){
+    console.log(user);
     markers_obj = {};
     markers.forEach((element, index) => {
         data_obj = {};
@@ -94,11 +95,11 @@ function updateMarkersTable(){
         data_obj['links'] = element['_links'];
         markers_obj[index] = data_obj;
     });
-//    console.log(markers_obj);
+   console.log("/processMarkers/" + user);
     $.ajax({
           type: "POST",
           contentType: "application/json;charset=utf-8",
-          url: "/processMarkers",
+          url: "/processMarkers/" + user,
           data: JSON.stringify(markers_obj),
           dataType: "json"
     }).done(function(data) {
@@ -106,7 +107,7 @@ function updateMarkersTable(){
 	});
 }
 
-function delete_marker() {
+function delete_marker(user) {
     var name = document.getElementById("delete_marker_name").value;
     if (!name) {
         alert('You have to choose a name for marker you want to delete!');
@@ -123,11 +124,11 @@ function delete_marker() {
         alert("There is no such marker");
     } else {
         markers.splice(marker_index, 1);
-        updateMarkersTable();
+        updateMarkersTable(user);
     }
 }
 
-function place_marker_util(name, info, coords) {
+function place_marker_util(name, info, coords, user) {
     var c = SMap.Coords.fromWGS84(coords);
     var name_match = "no";
     var coord_match = "no"
@@ -153,7 +154,7 @@ function place_marker_util(name, info, coords) {
         marker['_links'] = {};
         markers.push(marker);
         marker_layer.addMarker(marker);
-        updateMarkersTable()
+        updateMarkersTable(user)
     } else if (name_match === "yes") {
         alert("Marker with such name already exists. Choose a different one!")
     } else {
@@ -161,7 +162,7 @@ function place_marker_util(name, info, coords) {
     }
 }
 
-function createMarkersFromJson(json) {
+function createMarkersFromJson(json, user) {
 //    console.log("logging json")
 //    console.log(json);
     for (var key in json) {
@@ -187,20 +188,21 @@ function createMarkersFromJson(json) {
         markers.push(marker);
         marker_layer.addMarker(marker);
     }
-    updateMarkersTable();
+    updateMarkersTable(user);
 }
 
-function place_marker(){
+function place_marker(user){
+    console.log(user)
     var name = document.getElementById("place_marker_name").value;
     var info = document.getElementById("place_marker_info").value;
     var coords = document.getElementById("place_marker_coords").value;
-    place_marker_util(name, info, coords);
+    place_marker_util(name, info, coords, user);
 }
 
 var form = JAK.gel("form");
 JAK.Events.addListener(form, "submit", geokoduj);
 document.getElementById("coordinate_search_button").addEventListener("click", coordinate_search);
 
-document.getElementById("place_marker_button").addEventListener("click", place_marker);
-
-document.getElementById("delete_marker_button").addEventListener("click", delete_marker);
+// document.getElementById("place_marker_button").addEventListener("click", place_marker);
+//
+// document.getElementById("delete_marker_button").addEventListener("click", delete_marker);

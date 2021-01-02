@@ -1,4 +1,4 @@
-function addLinkToMarker() {
+function addLinkToMarker(user) {
     var marker_name = document.getElementById('marker_name').value
     var link = document.getElementById('file_link').value
     var placeholder = document.getElementById('marker_placeholder').value
@@ -29,11 +29,11 @@ function addLinkToMarker() {
     }
 //    console.log(markersData);
     desiredItem['links'][placeholder] = "<a target='_blank' href='" + link + "'>" + placeholder + "</a>";
-//    console.log(markersData);
+   console.log("/processMarkers/" + user);
     $.ajax({
           type: "POST",
           contentType: "application/json;charset=utf-8",
-          url: "/processMarkers",
+          url: "/processMarkers/" + user,
           data: JSON.stringify(markersData),
           dataType: "json"
     }).done(function(data) {
@@ -42,7 +42,7 @@ function addLinkToMarker() {
 	});
 }
 
-function deleteLinkFromMarker() {
+function deleteLinkFromMarker(user) {
     var marker_name = document.getElementById('marker_name').value
     var placeholder = document.getElementById('marker_placeholder').value
     if (!marker_name) {
@@ -80,7 +80,7 @@ function deleteLinkFromMarker() {
     $.ajax({
         type: "POST",
         contentType: "application/json;charset=utf-8",
-        url: "/processMarkers",
+        url: "/processMarkers/" + user,
         data: JSON.stringify(markersData),
         dataType: "json"
     }).done(function(data) {
@@ -88,5 +88,5 @@ function deleteLinkFromMarker() {
 	});
 }
 
-document.getElementById('add_link').addEventListener("click", addLinkToMarker);
-document.getElementById('delete_link').addEventListener("click", deleteLinkFromMarker);
+// document.getElementById('add_link').addEventListener("click", addLinkToMarker);
+// document.getElementById('delete_link').addEventListener("click", deleteLinkFromMarker);
